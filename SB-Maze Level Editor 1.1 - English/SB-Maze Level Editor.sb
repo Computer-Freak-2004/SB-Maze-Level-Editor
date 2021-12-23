@@ -1,0 +1,1043 @@
+'SB-Maze Level Editor 1.1
+'Tipps: Immer in der ersten Reihe anfangen, rechteckig bauen und keine Stellen ohne Wände
+GUISpace = 85
+
+CurrentLevel = 1
+LevelCount = 1
+
+Initialize_Startscreen()
+Initialize_MainWindow()
+Initialize_About()
+Initialize_Help()
+Initialize_ProgessbarWindow()
+
+ColorAreaBtnSelected = 1
+TitlePath = "Unnamed"
+
+LDWindows.CurrentID = 1
+InputCorrect = 0
+While InputCorrect = 0
+    FCDialogs.T_PromptDialogTitle = "SB-Maze Level Editor"
+    Playfieldwidth = FCDialogs.AskForTextLine("Playfieldwidth (5-30):")
+    If Playfieldwidth <> "" Then
+        If LDUtilities.IsNumber(Playfieldwidth) = "True" Then
+            If Playfieldwidth >= 5 And Playfieldwidth <= 30 Then
+                InputCorrect = 1
+            Else
+                InputCorrect = 0
+            EndIf
+        Else
+            InputCorrect = 0
+        EndIf
+    Else
+        InputCorrect = 0
+    EndIf
+    
+    If InputCorrect = 0 Then
+        'FCDialogs.T_ErrorDialogTitle = "SB-Maze Level Editor"
+        FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+        FCDialogs.ShowMessageAsError("Invalid input!")
+    EndIf
+EndWhile
+
+InputCorrect = 0
+While InputCorrect = 0
+    FCDialogs.T_PromptDialogTitle = "SB-Maze Level Editor"
+    Playfieldheight = FCDialogs.AskForTextLine("Playfieldheight (5-30):")
+    If Playfieldheight <> "" Then
+        If LDUtilities.IsNumber(Playfieldheight) = "True" Then
+            If Playfieldheight >= 5 And Playfieldheight <= 30 Then
+                InputCorrect = 1
+            Else
+                InputCorrect = 0
+            EndIf
+        Else
+            InputCorrect = 0
+        EndIf
+    Else
+        InputCorrect = 0
+    EndIf
+    
+    If InputCorrect = 0 Then
+        FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+        FCDialogs.ShowMessageAsError("Invalid input!")
+    EndIf
+EndWhile
+
+CreatePlayfield()
+
+Sub Initialize_Startscreen
+    'LDWindows.Create()
+    LDWindows.CurrentID = 0
+    GraphicsWindow.Width = 320
+    GraphicsWindow.Height = 220
+    GraphicsWindow.FontSize = 30
+    GraphicsWindow.Title = "Start"
+    GraphicsWindow.CanResize = 0
+    LDGraphicsWindow.Style = 0
+    LDGraphicsWindow.TopMost = "True"
+    LDUtilities.ShowErrors = "False"
+    LDUtilities.ShowNoShapeErrors = "False"
+    LDUtilities.ShowFileErrors = "False"
+    SPResolution.CenterGraphicsWindow()
+    LDGraphicsWindow.Icon = Program.Directory + "\Logo.ico"
+    GraphicsWindow.FontName = "Segoe UI"
+    BackBrush = LDShapes.BrushGradient("1=#0080FF;2=White","V")
+    BackBrush2 = LDShapes.BrushGradient("1=#0080FF;2=LightBlue","V")
+    LDGraphicsWindow.BackgroundBrush(BackBrush)
+    GraphicsWindow.CanResize = "False"
+    GraphicsWindow.PenColor = "Blue"
+    LDShapes.BrushRectangle(BackBrush2,5,5,317,237)
+    GraphicsWindow.BrushColor = "DarkBlue"
+    LDCursors.Wait()
+    GraphicsWindow.FontSize = 31
+    GraphicsWindow.DrawImage(Program.Directory + "\Logo.ico",150,20)
+    StartTitle = Shapes.AddText("SB-Maze Level Editor")
+    Shapes.Move(StartTitle,10,60)
+    GraphicsWindow.FontSize = 24
+    GraphicsWindow.DrawText(95,130,"Version 1.1")
+    GraphicsWindow.FontSize = 12
+    GraphicsWindow.BrushColor = "Black"
+    StartText = Shapes.AddText("Program is starting...")
+    Shapes.Move(StartText,10,220)
+    GraphicsWindow.BrushColor = "#0080FF"
+EndSub
+
+Sub Initialize_MainWindow
+    LDWindows.Create()
+    LDWindows.CurrentID = 1
+    GraphicsWindow.Title = "SB-Maze Level Editor - Unnamed"
+    LDGraphicsWindow.Icon = Program.Directory + "\Logo.ico"
+    GraphicsWindow.PenWidth = 0.75
+    GraphicsWindow.PenColor = "Black"
+    GraphicsWindow.Width = 640
+    GraphicsWindow.Height = 700
+    GraphicsWindow.Hide()
+    GraphicsWindow.BackgroundColor = "WhiteSmoke"
+    SPResolution.CenterGraphicsWindow()
+    
+    PerformingLevelAction = 1
+    GraphicsWindow.FontName = "Segoe UI"
+    GraphicsWindow.FontBold = "False"
+    GraphicsWindow.BrushColor = "Black"
+    
+    GraphicsWindow.DrawText(5,5,"Blocks:")
+    ColorAreaBtn = Controls.AddButton("Colorarea",5,30)
+    Controls.SetSize(ColorAreaBtn,100,25)
+    LDShapes.BrushColour(ColorAreaBtn,"CornflowerBlue")
+    
+    WallBtn = Controls.AddButton("Wall",115,30)
+    LDShapes.BrushColour(WallBtn,"#3e3e3e")
+    Controls.SetSize(WallBtn,100,25)
+    
+    StartAreaBtn = Controls.AddButton("Startblock",5,60)
+    Controls.SetSize(StartAreaBtn,100,25)
+    LDShapes.BrushColour(StartAreaBtn,"Orange")
+    
+    EmptyCubeBtn = Controls.AddButton("Emptyblock",115,60)
+    LDShapes.BrushColour(EmptyCubeBtn,"LightGray")
+    Controls.SetSize(EmptyCubeBtn,100,25)
+    
+    GraphicsWindow.DrawText(405,5,"Load / Save:")
+    NewBtn = Controls.AddButton("New",405,25)
+    Controls.SetSize(NewBtn,95,25)
+    
+    LoadBtn = Controls.AddButton("Load",500,25)
+    Controls.SetSize(LoadBtn,95,25)
+    
+    SaveBtn = Controls.AddButton("Save",500,60)
+    Controls.SetSize(SaveBtn,70,25)
+    
+    QuickSaveBtn = Controls.AddButton("FS",570,60)
+    Controls.SetSize(QuickSaveBtn,25,25)
+    LDDialogs.ToolTip(QuickSaveBtn,"Fast save")
+    
+    'SaveUndefinedBlocksFortestingBox = LDControls.AddCheckBox("Speichere unbelegte Blöcke (zum Testen)")
+    'Controls.Move(SaveUndefinedBlocksFortestingBox,405,15)
+    
+    SaveTestBtn = Controls.AddButton("Test Level",405,60)
+    Controls.SetSize(SaveTestBtn,95,25)
+    
+    GraphicsWindow.DrawText(235,5,"Levelnumber:")
+    
+    LevelNrList[1] = 1
+    
+    LevelNrBox = LDControls.AddComboBox(LevelNrList,65,100)
+    Controls.Move(LevelNrBox,320,5)
+    LDControls.ComboBoxItemChanged = CmbBoxChange
+    
+    MoveDownLevelBtn = Controls.AddButton("▼",235,31)
+    Controls.SetSize(MoveDownLevelBtn,30,25)
+    LDDialogs.ToolTip(MoveDownLevelBtn,"Move level down")
+    
+    MoveUpLevelBtn = Controls.AddButton("▲",265,31)
+    Controls.SetSize(MoveUpLevelBtn,30,25)
+    LDDialogs.ToolTip(MoveUpLevelBtn,"Move level up")
+    
+    InsertLevelBtn = Controls.AddButton("+",325,31)
+    Controls.SetSize(InsertLevelBtn,30,25)
+    LDDialogs.ToolTip(InsertLevelBtn,"Add Level")
+    
+    DeleteSelectedLevelBtn = Controls.AddButton("-",355,31)
+    Controls.SetSize(DeleteSelectedLevelBtn,30,25)
+    LDDialogs.ToolTip(DeleteSelectedLevelBtn,"Delete selected level")
+    
+    DeleteAllBtn = Controls.AddButton("Delete all blocks",235,60)
+    Controls.SetSize(DeleteAllBtn,150,25)
+    
+    AboutBtn = Controls.AddButton("",610,25)
+    LDShapes.SetImage(AboutBtn,Program.Directory + "\Info.ico")
+    Controls.SetSize(AboutBtn,25,25)
+    
+    HelpBtn = Controls.AddButton("",610,60)
+    LDShapes.SetImage(HelpBtn,Program.Directory + "\Help.ico")
+    Controls.SetSize(HelpBtn,25,25)
+    
+    Controls.ButtonClicked = BtnClick
+    
+    SelectShape = Shapes.AddRectangle(104,29)
+    LDShapes.PenColour(SelectShape,"Red")
+    LDShapes.PenWidth(SelectShape,2)
+    LDShapes.BrushColour(SelectShape,"Transparent")
+    LDShapes.ZIndex(SelectShape,-1)
+    Shapes.Move(SelectShape,3,28)
+    
+    GraphicsWindow.DrawLine(0,95,800,95)
+EndSub
+
+Sub Initialize_About
+    LDWindows.Create()
+    LDWindows.CurrentID = 2
+    GraphicsWindow.Width = 380
+    GraphicsWindow.Height = 345
+    GraphicsWindow.CanResize = "False"
+    GraphicsWindow.Title = "About SB-Maze Level Editor"
+    GraphicsWindow.Hide()
+    LDGraphicsWindow.ShowInTaskbar = "False"
+    LDGraphicsWindow.Icon = Program.Directory + "\Info.ico"
+    GraphicsWindow.BackgroundColor = "WhiteSmoke"
+    SPResolution.CenterGraphicsWindow()
+    GraphicsWindow.PenColor = "Black"
+    GraphicsWindow.FontName = "Segoe UI"
+    GraphicsWindow.FontBold = "False"
+    GraphicsWindow.FontSize = "12"
+    GraphicsWindow.BrushColor = "Black"
+    GraphicsWindow.FontSize = 32
+    GraphicsWindow.FontBold = "True"
+    GraphicsWindow.DrawText(50,1,"SB-Maze Level Editor")
+    GraphicsWindow.DrawLine(0,50,390,50)
+    GraphicsWindow.FontSize = 12
+    GraphicsWindow.FontBold = "True"
+    GraphicsWindow.DrawBoundText(5,55,340,"Leveleditor for my game SB-Maze, to quickly create and test levels!")
+    GraphicsWindow.FontBold = "False"
+    GraphicsWindow.DrawText(5,105,"Programmed by: Computer_Freak_2004")
+    GraphicsWindow.DrawText(5,120,"Version: 1.1")
+    GraphicsWindow.DrawText(5,135,"Date: 29.08.2021 - 23.12.2021")
+    GraphicsWindow.DrawText(5,150,"Programmed with:      MS Small Basic 1.2")
+    LDVersion = LDShell.Version
+    If LDVersion = "0.0.0.0" Then
+        LDVersion = "?"
+    EndIf
+    GraphicsWindow.DrawText(5,165,"Included LitDev-Extension Version: " + LDVersion)
+    GraphicsWindow.DrawText(5,190,"Version history:")
+    LDControls.RichTextBoxReadOnly = "True"
+    LDControls.RichTextBoxTextAlignment = "Left"
+    HistoryBox = LDControls.AddRichTextBox(370,100)
+    Controls.Move(HistoryBox,5,210)
+    
+    NL = Text.GetCharacter(10)
+    txt = txt +"- Version 0.7 -"+NL
+    txt = txt +"first Version with working editor with mouse support, loading / saving of levels in textfiles, Testfunction"+NL
+    txt = txt +""+NL
+    txt = txt +"- Version 0.9 -"+NL
+    txt = txt +"many bugfixes / improvements, Support for multiple levels in one single file, better error detection"+NL
+    txt = txt +""+NL
+    txt = txt +"- Version 1.0 -"+NL
+    txt = txt +"Improvements, added Help - and About dialogs, nicer dialogboxes, removed Debug-Infos, Level-testing: kill last-opened process"+NL
+    txt = txt +""+NL
+    txt = txt +"- Version 1.1 -"+NL
+    txt = txt +"Improvements, Progressbar when loading and saving of levels, Now possible to save path to game as textfile (GamePath.txt)"+NL
+    
+    LDControls.RichTextBoxSetText(HistoryBox,txt,"False")
+    GraphicsWindow.DrawImage(Program.Directory + "\Logo.ico",10,9)
+    GraphicsWindow.DrawImage(Program.Directory + "\SB.ico",105,150)
+    CloseAbout = Controls.AddButton("Close",230,315)
+    Controls.SetSize(CloseAbout,145,25)
+    LDGraphicsWindow.ExitOnClose = "False"
+    LDGraphicsWindow.CancelClose = "False"
+    LDGraphicsWindow.ExitButtonMode("About SB-Maze Level Editor","Disabled")
+    LDGraphicsWindow.TopMost = "True"
+EndSub
+
+Sub Initialize_Help
+    LDWindows.Create()
+    LDWindows.CurrentID = 3
+    GraphicsWindow.CanResize = "True"
+    GraphicsWindow.Width = 600
+    GraphicsWindow.Height = 350
+    LDGraphicsWindow.Resize = 0
+    SPResolution.CenterGraphicsWindow()
+    LDGraphicsWindow.Icon = Program.Directory + "\Help.ico"
+    LDGraphicsWindow.TopMost = "True"
+    GraphicsWindow.Title = "Help"
+    GraphicsWindow.Hide()
+    LDGraphicsWindow.ShowInTaskbar = "False"
+    LDGraphicsWindow.ExitOnClose = "False"
+    LDGraphicsWindow.CancelClose = "False"
+    LDGraphicsWindow.ExitButtonMode("Hilfe","Disabled")
+    GraphicsWindow.BackgroundColor = "WhiteSmoke"
+    GraphicsWindow.PenColor = "Black"
+    HelpBox = LDControls.AddRichTextBox(600,313)
+    LDShapes.SetProperty(HelpBox, "IsReadOnly","True")
+    LDControls.RichTextBoxLoad(HelpBox,Program.Directory + "\Help.rtf","False")
+    HideHelp = Controls.AddButton("Close",440,320)
+    Controls.SetSize(HideHelp,150,25)
+EndSub
+
+Sub Initialize_ProgessbarWindow
+    LDWindows.Create()
+    LDWindows.CurrentID = 4
+    GraphicsWindow.Width = 324
+    GraphicsWindow.Height = 55
+    SPResolution.CenterGraphicsWindow()
+    GraphicsWindow.Hide()
+    GraphicsWindow.BackgroundColor = "WhiteSmoke"
+    GraphicsWindow.Title = "Please wait..."
+    LDGraphicsWindow.TopMost = "True"
+    LDGraphicsWindow.Icon = Program.Directory + "\Logo.ico"
+    GraphicsWindow.CanResize = "False"
+    LDGraphicsWindow.ExitOnClose = "False"
+    LDGraphicsWindow.CancelClose = "False"
+    LDGraphicsWindow.ExitButtonMode("Please wait...","Disabled")
+    GraphicsWindow.PenColor = "Blue"
+    LDCursors.Wait()
+    LoadSaveText = Shapes.AddText("")
+    Shapes.Move(LoadSaveText,100,5)
+    LoadSaveProgressBar = LDControls.AddProgressBar(315,25,"H")
+    Controls.Move(LoadSaveProgressBar,5,27)
+    LDShapes.PenColour(LoadSaveProgressbar,"CornflowerBlue")
+    PercentDoneText = Shapes.AddText("")
+    Shapes.Move(PercentDoneText,150,31)
+    LDShapes.ZIndex(PercentDoneText,2)
+    
+    Program.Delay(500)
+    LDWindows.CurrentID = 0
+    GraphicsWindow.Hide()
+    LDWindows.CurrentID = 1
+    GraphicsWindow.Show()
+EndSub
+
+Sub CreatePlayfield
+    'Spielfeld erstellen
+    For y = 1 To Playfieldheight
+        For x = 1 To Playfieldwidth
+            shape[x][y] = Shapes.AddRectangle(20,20)
+            Shapes.Move(shape[x][y],x*20,y*20 + GUISpace)
+            LDShapes.BrushColour(shape[x][y],"White")
+        EndFor
+    EndFor
+    
+    'MouseEvents registrieren
+    For y = 1 To Playfieldheight
+        For x = 1 To Playfieldwidth
+            FCControls.RegisterMouseDownEvent(shape[x][y],"ShapeClicked")
+            FCControls.RegisterMouseMoveEvent(shape[x][y],"ShapeClicked")
+        EndFor
+    EndFor
+    
+    PerformingLevelAction = 0
+EndSub
+
+Sub ShowSaveLoadProgressbar
+    LDWindows.CurrentID = 4
+    GraphicsWindow.Show()
+    LDWindows.CurrentID = 1
+EndSub
+
+Sub HideSaveLoadProgressbar
+    LDWindows.CurrentID = 4
+    GraphicsWindow.Hide()
+    LDWindows.CurrentID = 1
+    LDControls.ProgressBarValue(LoadSaveProgressbar,0)
+EndSub
+
+Sub RefreshSaveLoadProgressbar
+    LDWindows.Active = 4
+    If Save = 1 Then
+        Shapes.SetText(LoadSaveText,"Saving Level: " + i + "/" + Array.GetItemCount(LevelNrList))
+        LDControls.ProgressBarValue(LoadSaveProgressBar,(i / Array.GetItemCount(LevelNrList)) * 100)
+        Shapes.SetText(PercentDoneText,LDMath.FixDecimal(i / Array.GetItemCount(LevelNrList) * 100, 1) + " %")
+    ElseIf Load = 1 Then
+        Shapes.SetText(LoadSaveText,"Loading Level: " + LevelNr + "/" + MaxLevel)
+        LDControls.ProgressBarValue(LoadSaveProgressBar,LevelNr / MaxLevel * 100)
+        Shapes.SetText(PercentDoneText,LDMath.FixDecimal(LevelNr / MaxLevel * 100, 1) + " %")
+    EndIf
+EndSub
+
+Sub BtnClick
+    If Controls.LastClickedButton = ColorAreaBtn Then
+        Shapes.Move(SelectShape,3,28)
+        ColorAreaBtnSelected = 1
+        WallBtnSelected = 0
+        StartAreaBtnSelected = 0
+        EmptyCubeBtnSelected = 0
+    EndIf
+    
+    If Controls.LastClickedButton = WallBtn Then
+        Shapes.Move(SelectShape,113,28)
+        WallBtnSelected = 1
+        ColorAreaBtnSelected = 0
+        StartAreaBtnSelected = 0
+        EmptyCubeBtnSelected = 0
+    EndIf
+    
+    If Controls.LastClickedButton = StartAreaBtn Then
+        Shapes.Move(SelectShape,3,58)
+        StartAreaBtnSelected = 1
+        WallBtnSelected = 0
+        ColorAreaBtnSelected = 0
+        EmptyCubeBtnSelected = 0
+    EndIf
+    
+    If Controls.LastClickedButton = EmptyCubeBtn Then
+        Shapes.Move(SelectShape,113,58)
+        EmptyCubeBtnSelected = 1
+        StartAreaBtnSelected = 0
+        WallBtnSelected = 0
+        ColorAreaBtnSelected = 0
+    EndIf
+    
+    If Controls.LastClickedButton = NewBtn Then
+        TitlePath = "Unnamed"
+        GraphicsWindow.Title = "SB-Maze Level Editor - " + TitlePath
+        DeleteAll()
+        'Lösche den LevelDataArray
+        For i = 1 To LevelCount
+            For j = 1 To Playfieldheight
+                LevelData[i][j] = ""
+            EndFor
+        EndFor
+        
+        'Lösche den LevelNrArray
+        
+        For i = 1 To LevelCount
+            LevelNrList[i] = ""
+        EndFor
+        
+        CurrentLevel = 1
+        LevelCount = 1
+        
+        'Array der Level für ComboBox setzen
+        
+        For i = 1 To LevelCount
+            LevelNrList[i] = i
+        EndFor
+        
+        'Für ComboBox aktualisieren:
+        LDControls.ComboBoxContent(LevelNrBox,LevelNrList)
+        LDControls.ComboBoxSelect(LevelNrBox,1)
+        
+        LoadLevelDataFromArray()
+        PerformingLevelAction = 0
+    EndIf
+    
+    If Controls.LastClickedButton = SaveTestBtn Then
+        If PerformingLevelAction <> 1 Then
+            GamePath = File.ReadContents(Program.Directory + "\GamePath.txt")
+            If GamePath <> "" Then
+                PerformingLevelAction = 1
+                'Speichern in Leveldatei und Spiel mit eigenem Level starten
+                FilePath = GamePath + "\CustomLevels.lev"
+                'Schauen ob erste Zeile des Levels leer ist
+                'Aktuelles Level vorher speichern
+                SaveLevelDataToArray()
+                
+                NotFirstRowUsedError = 0
+                For i = 1 To LevelCount
+                    '? ersetzen durch nichts um Vergleich einfacher zu machen
+                    If LDText.Replace(LevelData[i][1],"?","") = "" Or LevelData[i][1] = "" Then
+                        NotFirstRowUsedError = 1
+                    EndIf
+                EndFor
+                
+                If NotFirstRowUsedError = 1 Then
+                    FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+                    FCDialogs.ShowMessageAsInformation("One or more levels do not have blocks in the first row / no blocks at all!")
+                Else
+                    File.DeleteFile(FilePath) 'Datei löschen falls vorhanden
+                    
+                    TextFileLineNumber = 0
+                    SaveLevelDataToArray() 'Vom aktuellen Level die Daten ins Array schreiben (restliche Level sollten schon im Array sein)
+                    ShowSaveLoadProgressbar()
+                    For i = 1 To Array.GetItemCount(LevelNrList)
+                        Load = 0
+                        Save = 1
+                        RefreshSaveLoadProgressbar()
+                        'Daten auslesen und in Datei schreiben
+                        For y = 1 To Playfieldheight
+                            TextFileLineNumber = TextFileLineNumber + 1
+                            'Leveldaten ohne Fragezeichen für Spiel
+                            GameLevelData[i][y] = LDText.Replace(LevelData[i][y],"?","")
+                            If GameLevelData[i][y] <> "" Then
+                                File.WriteLine(FilePath,TextFileLineNumber,"LevelData["+ i + "][" + y + "] = " + Text.GetCharacter(34) + GameLevelData[i][y] + Text.GetCharacter(34))
+                            EndIf
+                        EndFor
+                    EndFor
+                    
+                    'Spiel starten und Parameter zum Laden der eigenen Level übergeben
+                    LDProcess.Stop(LastProcessID)
+                    
+                    File.WriteContents(GamePath + "\CustomLevelStartWith.txt",LDControls.ComboBoxGetSelected(LevelNrBox))
+                    LastProcessID = LDProcess.Start(GamePath + "\SB-Maze.exe","LoadCustomLevels")
+                    If LastProcessID = -1 Then
+                        FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+                        FCDialogs.ShowMessageAsError("Could not start the game! Please check path in GamePath.txt!")
+                        EndIf
+                EndIf
+                PerformingLevelAction = 0
+                HideSaveLoadProgressbar()
+            Else
+                FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+                FCDialogs.ShowMessageAsError("No path to the game in the file! Please enter the path to the game into the GamePath.txt!")
+            EndIf
+        EndIf
+    EndIf
+    
+    If Controls.LastClickedButton = SaveBtn Then
+        If PerformingLevelAction <> 1 Then
+            PerformingLevelAction = 1
+            'Speichern in Textdatei
+            FilePath = LDDialogs.SaveFile("Levelfiles|*.lev|All Files|*.*","")
+            If FilePath <> "" Then
+                If Text.EndsWith(FilePath,".lev") = "False" And Text.EndsWith(FilePath,".LEV") = "False" Then
+                    FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+                    FCDialogs.ShowMessageAsError("File is no Levelfile!")
+                Else
+                    
+                    'Schauen ob erste Zeile des Levels leer ist
+                    'Aktuelles Level vorher speichern
+                    SaveLevelDataToArray()
+                    
+                    NotFirstRowUsedError = 0
+                    For i = 1 To LevelCount
+                        '? ersetzen durch nichts um Vergleich einfacher zu machen
+                        If LDText.Replace(LevelData[i][1],"?","") = "" Or LevelData[i][1] = "" Then
+                            NotFirstRowUsedError = 1
+                        EndIf
+                    EndFor
+                    
+                    If NotFirstRowUsedError = 1 Then
+                        FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+                        FCDialogs.ShowMessageAsError("One or more levels do not have blocks in the first row / no blocks at all!")
+                    Else
+                        TitlePath = FilePath
+                        GraphicsWindow.Title = "SB-Maze Level Editor - " + TitlePath
+                        File.DeleteFile(FilePath) 'Datei löschen falls vorhanden
+                        TextFileLineNumber = 0
+                        SaveLevelDataToArray() 'Vom aktuellen Level die Daten ins Array schreiben (restliche Level sollten schon im Array sein)
+                        ShowSaveLoadProgressbar()
+                        For i = 1 To Array.GetItemCount(LevelNrList)
+                            Load = 0
+                            Save = 1
+                            RefreshSaveLoadProgressbar()
+                            'Daten auslesen und in Datei schreiben
+                            For y = 1 To Playfieldheight
+                                TextFileLineNumber = TextFileLineNumber + 1
+                                'Leveldaten ohne Fragezeichen für Spiel
+                                GameLevelData[i][y] = LDText.Replace(LevelData[i][y],"?","")
+                                If GameLevelData[i][y] <> "" Then
+                                    File.WriteLine(FilePath,TextFileLineNumber,"LevelData["+ i + "][" + y + "] = " + Text.GetCharacter(34) + GameLevelData[i][y] + Text.GetCharacter(34))
+                                    'GraphicsWindow.ShowMessage("LevelData["+ i + "][" + y + "] = " + Text.GetCharacter(34) + GameLevelData[i][y] + Text.GetCharacter(34),"")
+                                EndIf
+                            EndFor
+                        EndFor
+                    EndIf
+                EndIf
+            EndIf
+            PerformingLevelAction = 0
+        EndIf
+        HideSaveLoadProgressbar()
+    EndIf
+    
+    If Controls.LastClickedButton = QuickSaveBtn Then
+        If PerformingLevelAction <> 1 Then
+            PerformingLevelAction = 1
+            'Speichern in Textdatei
+            If TitlePath = "Unnamed" Then
+                FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+                FCDialogs.ShowMessageAsError("No file opened!")
+            EndIf
+            If TitlePath <> "" And TitlePath <> "Unnamed" Then
+                'Schauen ob erste Zeile des Levels leer ist
+                'Aktuelles Level vorher speichern
+                SaveLevelDataToArray()
+                
+                NotFirstRowUsedError = 0
+                For i = 1 To LevelCount
+                    '? ersetzen durch nichts um Vergleich einfacher zu machen
+                    If LDText.Replace(LevelData[i][1],"?","") = "" Or LevelData[i][1] = "" Then
+                        NotFirstRowUsedError = 1
+                    EndIf
+                EndFor
+                
+                If NotFirstRowUsedError = 1 Then
+                    FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+                    FCDialogs.ShowMessageAsInformation("One or more levels do not have blocks in the first row / no blocks at all!")
+                Else
+                    
+                    FilePath = TitlePath
+                    File.DeleteFile(FilePath) 'Datei löschen falls vorhanden
+                    TextFileLineNumber = 0
+                    SaveLevelDataToArray() 'Vom aktuellen Level die Daten ins Array schreiben (restliche Level sollten schon im Array sein)
+                    ShowSaveLoadProgressbar()
+                    For i = 1 To Array.GetItemCount(LevelNrList)
+                        Load = 0
+                        Save = 1
+                        RefreshSaveLoadProgressbar()
+                        'Daten auslesen und in Datei schreiben
+                        'GraphicsWindow.ShowMessage(i,"")
+                        For y = 1 To Playfieldheight
+                            TextFileLineNumber = TextFileLineNumber + 1
+                            'Leveldaten ohne Fragezeichen für Spiel
+                            GameLevelData[i][y] = LDText.Replace(LevelData[i][y],"?","")
+                            If GameLevelData[i][y] <> "" Then
+                                File.WriteLine(FilePath,TextFileLineNumber,"LevelData["+ i + "][" + y + "] = " + Text.GetCharacter(34) + GameLevelData[i][y] + Text.GetCharacter(34))
+                                'GraphicsWindow.ShowMessage("LevelData["+ i + "][" + y + "] = " + Text.GetCharacter(34) + GameLevelData[i][y] + Text.GetCharacter(34),"")
+                            EndIf
+                        EndFor
+                    EndFor
+                EndIf
+            EndIf
+            PerformingLevelAction = 0
+        EndIf
+        HideSaveLoadProgressbar()
+    EndIf
+    
+    If Controls.LastClickedButton = LoadBtn Then 'Lade-Code von SB-Maze
+        If PerformingLevelAction <> 1 Then
+            PerformingLevelAction = 1
+            'Laden von Textdatei
+            FilePath = LDDialogs.OpenFile("Levelfiles|*.lev|All Files|*.*","")
+            If FilePath <> "" Then
+                If Text.EndsWith(FilePath,".lev") = "False" And Text.EndsWith(FilePath,".LEV") = "False" Then
+                    FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+                    FCDialogs.ShowMessageAsError("File is no levelfile!")
+                Else
+                    
+                    If Text.GetSubText(File.ReadLine(FilePath,1),1,12) <> "LevelData[1]" Then 'Ist das eine Leveldatei?
+                        FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+                        FCDialogs.ShowMessageAsError("Invalid file!")
+                    Else
+                        
+                        TitlePath = FilePath
+                        GraphicsWindow.Title = "SB-Maze Level Editor - " + TitlePath
+                        'Alles löschen
+                        DeleteAll()
+                        
+                        'Arrays löschen
+                        For y = 1 To Playfieldheight * LevelCount
+                            For x = 1 To Playfieldwidth
+                                LevelData[x][y] = ""
+                            EndFor
+                        EndFor
+                        
+                        For i = 1 To LevelCount
+                            LevelNrList[i] = ""
+                        EndFor
+                        
+                        'Anzahl an Leveln in der Datei bestimmen
+                        LastLine = LDFile.Length(FilePath)
+                        RowString = File.ReadLine(FilePath,LastLine)
+                        MaxLevel = LDText.Split(RowString,"LevelData[")
+                        MaxLevel = LDText.Split(MaxLevel[1],"]")
+                        MaxLevel = MaxLevel[1]
+                        LevelCount = MaxLevel
+                        
+                        'Array der Level für ComboBox setzen
+                        
+                        For i = 1 To MaxLevel
+                            LevelNrList[i] = i
+                        EndFor
+                        
+                        'Für ComboBox aktualisieren:
+                        LDControls.ComboBoxContent(LevelNrBox,LevelNrList)
+                        LDControls.ComboBoxSelect(LevelNrBox,1)
+                        'GraphicsWindow.ShowMessage("Level in der Datei: " + MaxLevel,"")
+                        ShowSaveLoadProgressbar()
+                        For LevelNr = 1 To MaxLevel
+                            'erste und letzte Zeile des Levels bestimmen
+                            CurrentRow = 0
+                            RowsFound = 0
+                            FirstRowFound = 0
+                            SecondRowFound = 0
+                            AllRowsFound = 0
+                            FirstRow = 0
+                            SecondRow = 0
+                            While AllRowsFound = 0
+                                CurrentRow = CurrentRow + 1
+                                RowString = File.ReadLine(FilePath,CurrentRow)
+                                
+                                'LevelNr herausbekommen
+                                LevelNrTest = LDText.Split(RowString,"LevelData[")
+                                LevelNrTest = LDText.Split(LevelNrTest[1],"]")
+                                LevelNrTest = LevelNrTest[1]
+                                
+                                If LevelNr = LevelNrTest Then
+                                    If FirstRowFound <> 1 Then
+                                        'erste Zeile herausgefunden
+                                        FirstRow = CurrentRow
+                                        FirstRowFound = 1
+                                    EndIf
+                                ElseIf (LevelNr + 1) = LevelNrTest Or LevelNrTest = "" Then
+                                    If SecondRowFound <> 1 Then
+                                        'zweite Zeile herausgefunden
+                                        LastRow = CurrentRow - 1
+                                        SecondRowFound = 1
+                                        AllRowsFound = 1
+                                    EndIf
+                                EndIf
+                            EndWhile
+                            
+                            LevelRows = LastRow + 1 - FirstRow
+                            LevelDataRow = 0
+                            
+                            For i = FirstRow To LastRow 'Start und Endzeile für Dateilesen
+                                Load = 1
+                                Save = 0
+                                RefreshSaveLoadProgressbar()
+                                RowString = File.ReadLine(FilePath,i)
+                                
+                                LevelDataRow = LevelDataRow + 1 'Reihe für LevelData Array
+                                
+                                LevelData[LevelNr][LevelDataRow] = LDText.Replace(RowString,"LevelData[" + LevelNr + "][" + LevelDataRow + "] = ","")
+                                LevelData[LevelNr][LevelDataRow] = LDText.Replace(LevelData[LevelNr][LevelDataRow],Text.GetCharacter(34),"")
+                                'GraphicsWindow.ShowMessage(LevelData[LevelNr][LevelDataRow],"")
+                                'GraphicsWindow.ShowMessage(LevelData,"")
+                            EndFor
+                            
+                        EndFor
+                        
+                        'Variablen neu setzen
+                        LevelNr = 1
+                        CurrentLevel = 1
+                        'erstes Level laden
+                        LoadLevelDataFromArray()
+                    EndIf
+                EndIf
+            EndIf
+        EndIf
+        HideSaveLoadProgressbar()
+        PerformingLevelAction = 0
+    EndIf
+    
+    If Controls.LastClickedButton = InsertLevelBtn Then
+        If PerformingLevelAction <> 1 Then
+            PerformingLevelAction = 1
+            SaveLevelDataToArray()
+            DeleteAll()
+            
+            'Herausfinden wieviele Level bereits im Array sind
+            
+            LevelCount = LevelCount + 1 '1 weiteres Level!
+            'LevelNrListArray löschen
+            For i = 1 To LevelCount
+                LevelNrList[i] = i
+            EndFor
+            'LevelNrList Array neu erstellen mit extra Level
+            'GraphicsWindow.ShowMessage("LevelCount: " + LevelCount,"")
+            For i = 1 To LevelCount
+                LevelNrList[i] = i
+            EndFor
+            'Neues Array für ComboBox setzen und nächstes neues Level auswählen
+            LDControls.ComboBoxContent(LevelNrBox,LevelNrList)
+            LDControls.ComboBoxSelect(LevelNrBox,LevelCount)
+            CurrentLevel = LevelCount
+            LoadLevelDataFromArray()
+            PerformingLevelAction = 0
+        EndIf
+    EndIf
+    
+    If Controls.LastClickedButton = DeleteSelectedLevelBtn Then
+        If PerformingLevelAction <> 1 Then
+            PerformingLevelAction = 1
+            If LevelCount = 1 Then
+                FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+                FCDialogs.ShowMessageAsInformation("Not every level can be deleted. To delete this level use 'Delete All Blocks'!")
+            Else
+                'Aktuelles Level löschen und darunterliegende Level wieder hochschieben
+                LevelNr = LDControls.ComboBoxGetSelected(LevelNrBox)
+                'GraphicsWindow.ShowMessage("Level löschen: "+ LevelNr,"")
+                'Aktuelles Level löschen
+                SaveLevelDataToArray()
+                For i = 1 To Playfieldheight
+                    'GraphicsWindow.ShowMessage("Before deleting: " + LevelData[LevelNr][i],"")
+                    LevelData[LevelNr][i] = ""
+                    '5GraphicsWindow.ShowMessage("After deleting: " + LevelData[LevelNr][i],"")
+                EndFor
+                
+                'LevelNrList Array löschen
+                For i = 1 To LevelCount
+                    LevelNrList[i] = ""
+                EndFor
+                
+                LevelCount = LevelCount - 1 '1 Level weg!
+                
+                'LevelNrList Array neu erstellen mit 1 weniger Level
+                For i = 1 To LevelCount
+                    LevelNrList[i] = i
+                EndFor
+                'Neues Array für ComboBox setzen und vorheriges Level auswählen
+                LDControls.ComboBoxContent(LevelNrBox,LevelNrList)
+                If LevelNr  < 1 Then
+                    LevelNr = 1
+                EndIf
+                
+                LDControls.ComboBoxSelect(LevelNrBox,LevelNr - 1)
+                
+                'Aktuelles Level setzen
+                CurrentLevel = LevelNr - 1
+                
+                'Level die hinter dem gelöschten Level liegen hochschieben (Levelposition - 1)
+                LevelNr = LevelNr + 1 'Level nach dem gelöschten Level
+                'GraphicsWindow.ShowMessage(LevelCount,"")
+                For j = LevelNr To LevelCount + 1
+                    For i = 1 To Playfieldheight
+                        'Vorher alle Daten löschen
+                        LevelData[j-1][i] = ""
+                        'Leveldaten hochpacken
+                        LevelData[j-1][i] = LevelData[j][i] 'Level nach dem gelöschten Level um 1 nach oben
+                    EndFor
+                EndFor
+                
+                'Letztes Level löschen, da es nicht von der For-Schleife gelöscht wird
+                For i = 1 To Playfieldheight
+                    LevelData[LevelCount + 1][i] = ""
+                EndFor
+                
+                'Neu laden
+                If CurrentLevel = 0 Then
+                    CurrentLevel = 1
+                EndIf
+                
+                LoadLevelDataFromArray()
+            EndIf
+            PerformingLevelAction = 0
+        EndIf
+    EndIf
+    
+    If Controls.LastClickedButton = MoveUpLevelBtn Then
+        If PerformingLevelAction <> 1 Then
+            PerformingLevelAction = 1
+            'Aktuelles Level hochschieben (oder tauschen mit dem darüberliegendem Level)
+            LevelNr = LDControls.ComboBoxGetSelected(LevelNrBox)
+            If LevelNr = 1 Then
+                FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+                FCDialogs.ShowMessageAsError("Level can't be moved higher!")
+            Else
+                'GraphicsWindow.ShowMessage("Level hochschieben: "+ LevelNr,"")
+                
+                For i = 1 To Playfieldheight
+                    'Leveldaten vom darüberliegendem Level speichern
+                    SaveLevelData[LevelNr-1][i] = LevelData[LevelNr-1][i]
+                    'Leveldaten des darüberliegendem Level löschen
+                    LevelData[LevelNr-1][i] = ""
+                EndFor
+                
+                For i = 1 To Playfieldheight
+                    'Leveldaten des ausgewählten Level in das darüberliegende schieben
+                    LevelData[LevelNr-1][i] = LevelData[LevelNr][i]
+                    'Leveldaten des ausgewählten Levels löschen
+                    LevelData[LevelNr][i] = ""
+                    'Gespeichertes darübergelegenes Level in das aktuell ausgewählte Level schieben
+                    LevelData[LevelNr][i] = SaveLevelData[LevelNr-1][i]
+                EndFor
+                
+                CurrentLevel = CurrentLevel - 1
+                LDControls.ComboBoxSelect(LevelNrBox,CurrentLevel)
+                'GraphicsWindow.ShowMessage("Lade nach Verschiebung Level: " + CurrentLevel,"")
+                DeleteAll()
+                LoadLevelDataFromArray()
+                
+            EndIf
+            PerformingLevelAction = 0
+        EndIf
+    EndIf
+    
+    If Controls.LastClickedButton = MoveDownLevelBtn Then
+        If  PerformingLevelAction <> 1 Then
+            PerformingLevelAction = 1
+            'Aktuelles Level hochschieben (oder tauschen mit dem darüberliegendem Level)
+            LevelNr = LDControls.ComboBoxGetSelected(LevelNrBox)
+            If LevelNr = LevelCount Then
+                FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+                FCDialogs.ShowMessageAsError("Level can't be moved lower!")
+            Else
+                'GraphicsWindow.ShowMessage("Level hochschieben: "+ LevelNr,"")
+                
+                For i = 1 To Playfieldheight
+                    'Leveldaten vom darunterliegendem Level speichern
+                    SaveLevelData[LevelNr+1][i] = LevelData[LevelNr+1][i]
+                    'Leveldaten des darunterliegendem Level löschen
+                    LevelData[LevelNr+1][i] = ""
+                EndFor
+                
+                For i = 1 To Playfieldheight
+                    'Leveldaten des ausgewählten Level in das darunterliegende schieben
+                    LevelData[LevelNr+1][i] = LevelData[LevelNr][i]
+                    'Leveldaten des ausgewählten Levels löschen
+                    LevelData[LevelNr][i] = ""
+                    'Gespeichertes darunterliegende Level in das aktuell ausgewählte Level schreiben
+                    LevelData[LevelNr][i] = SaveLevelData[LevelNr+1][i]
+                EndFor
+                
+                CurrentLevel = CurrentLevel + 1
+                LDControls.ComboBoxSelect(LevelNrBox,CurrentLevel)
+                'GraphicsWindow.ShowMessage("Lade nach Verschiebung Level: " + CurrentLevel,"")
+                DeleteAll()
+                LoadLevelDataFromArray()
+                
+            EndIf
+            PerformingLevelAction = 0
+        EndIf
+    EndIf
+    
+    If Controls.LastClickedButton = DeleteAllBtn Then
+        If PerformingLevelAction <> 1 Then
+            PerformingLevelAction = 1
+            'Alles löschen
+            DeleteAll()
+            PerformingLevelAction = 0
+        EndIf
+    EndIf
+    
+    If Controls.LastClickedButton = HelpBtn Then
+        LDWindows.CurrentID = 3
+        GraphicsWindow.Show()
+        LDWindows.CurrentID = 1
+    EndIf
+    
+    If Controls.LastClickedButton = HideHelp Then
+        LDWindows.CurrentID = 3
+        GraphicsWindow.Hide()
+        LDWindows.CurrentID = 1
+    EndIf
+    
+    If Controls.LastClickedButton = AboutBtn Then
+        LDWindows.CurrentID = 2
+        GraphicsWindow.Show()
+        LDWindows.CurrentID = 1
+    EndIf
+    
+    If Controls.LastClickedButton = CloseAbout Then
+        LDWindows.CurrentID = 2
+        GraphicsWindow.Hide()
+        LDWindows.CurrentID = 1
+    EndIf
+EndSub
+
+Sub CmbBoxChange
+    If PerformingLevelAction <> 1 Then
+        PerformingLevelAction = 1
+        'Aktuelles Level speichern & neues Level aus LevelData[LevelNr][i] laden
+        SaveLevelDataToArray()
+        DeleteAll()
+        CurrentLevel = LDControls.ComboBoxGetSelected(LevelNrBox)
+        PerformingLevelAction = 0
+        LoadLevelDataFromArray()
+    EndIf
+EndSub
+
+Sub SaveLevelDataToArray
+    LevelNr = CurrentLevel
+    'GraphicsWindow.ShowMessage(CurrentLevel,"")
+    'GraphicsWindow.ShowMessage("Speichere Level: " + LevelNr,"")
+    'Leveldaten aus Leveleditor auslesen und in Array schreiben
+    RowString = ""
+    For y = 1 To Playfieldheight
+        For x = 1 To Playfieldwidth
+            BlockColor = FCControls.GetBackground(shape[x][y])
+            If BlockColor = "#6495ED" Then 'Färbbereich?
+                RowString = RowString + "O"
+            ElseIf BlockColor = "#3E3E3E" Then 'Wand?
+                RowString = RowString + "X"
+            ElseIf BlockColor = "#FFA500" Then 'Startposition?
+                RowString = RowString + "S"
+            ElseIf BlockColor = "#D3D3D3" Then 'Leerblock?
+                RowString = RowString + " "
+            ElseIf BlockColor = "#FFFFFF" Then 'Unbelegter Block?
+                RowString = RowString + "?"
+            EndIf
+        EndFor
+        If RowString <> "" Then
+            'GraphicsWindow.ShowMessage("Speichere: " + RowString,"")
+            LevelData[LevelNr][y] = RowString
+            RowString = ""
+        EndIf
+    EndFor
+EndSub
+
+Sub LoadLevelDataFromArray
+    LevelNr = CurrentLevel
+    'LevelNr = LDControls.ComboBoxGetSelected(LevelNrBox)
+    'Leveldaten aus Array lesen und in Leveleditor hauen
+    'GraphicsWindow.ShowMessage("lade level: " + LevelNr,"")
+    For y = 1 To Playfieldheight
+        RowString = LevelData[LevelNr][y]
+        For x = 1 To Playfieldwidth
+            Block = Text.GetSubText(LevelData[LevelNr][y],x,1)
+            If Block = "O" Then 'Färbbereich?
+                LDShapes.BrushColour(shape[x][y],"#6495ED")
+            ElseIf Block = "X" Then 'Wand?
+                LDShapes.BrushColour(shape[x][y],"#3E3E3E")
+            ElseIf Block = "S" Then 'Startposition?
+                LDShapes.BrushColour(shape[x][y],"#FFA500")
+            ElseIf Block = " " Then 'Leerblock?
+                LDShapes.BrushColour(shape[x][y],"#D3D3D3")
+            ElseIf Block = "?" Then 'Unbelegter Block?
+                LDShapes.BrushColour(shape[x][y],"#FFFFFF")
+            EndIf
+        EndFor
+    EndFor
+EndSub
+
+Sub DeleteAll
+    For y = 1 To Playfieldheight
+        For x = 1 To Playfieldwidth
+            LDShapes.BrushColour(shape[x][y],"White")
+        EndFor
+    EndFor
+EndSub
+
+'Shape angeklickt! Linke Maustaste: zeichnen, rechte: löschen
+Sub ShapeClicked
+    If Mouse.IsLeftButtonDown Then
+        If ColorAreaBtnSelected = 1 Then
+            LDShapes.BrushColour(FCControls.LastEventSource,"CornflowerBlue")
+        ElseIf WallBtnSelected = 1 Then
+            LDShapes.BrushColour(FCControls.LastEventSource,"#3e3e3e")
+        ElseIf StartAreaBtnSelected = 1 Then
+            SaveLevelDataToArray()
+            StartblockFound = 0
+            For i = 1 To Playfieldheight
+                Startblock = LDText.FindAll(LevelData[CurrentLevel][i],"S")
+                'GraphicsWindow.ShowMessage(Startblock,"")
+                If Startblock <> 0 Then
+                    StartblockFound = 1
+                EndIf
+            EndFor
+            If StartblockFound = 1 Then
+                FCDialogs.T_InformationDialogTitle = "SB-Maze Level Editor"
+                FCDialogs.ShowMessageAsInformation("Only one startblock per level possible!")
+            Else
+                LDShapes.BrushColour(FCControls.LastEventSource,"Orange")
+            EndIf
+        ElseIf EmptyCubeBtnSelected = 1 Then
+            LDShapes.BrushColour(FCControls.LastEventSource,"LightGray")
+        EndIf
+    ElseIf Mouse.IsRightButtonDown Then
+        If FCControls.GetBackground(FCControls.LastEventSource) = "Orange" Then
+            StartAreaPlaced = 0
+        EndIf
+        LDShapes.BrushColour(FCControls.LastEventSource,"White")
+    EndIf
+EndSub
